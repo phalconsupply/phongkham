@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  # Nginx Web Server
+  nginx:
+    image: nginx:alpine
+    container_name: phongkham_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - php
+    networks:
+      - phongkham_network
+
+  # PHP-FPM
+  php:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: phongkham_php
+    volumes:
+      - ./:/var/www/html
+      - ./docker/php/php.ini:/usr/local/etc/php/php.ini
+    environment:
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - phongkham_network
+
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: phongkham_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: phongkham
+      MYSQL_USER: phongkham
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    networks:
+      - phongkham_network
+
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: phongkham_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - phongkham_network
+
+  # Laravel Horizon (Queue Worker)
+  horizon:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    container_name: phongkham_horizon
+    command: php artisan horizon
+    volumes:
+      - ./:/var/www/html
+    environment:
+      - DB_HOST=mysql
+      - REDIS_HOST=redis
+    depends_on:
+      - mysql
+      - redis
+    networks:
+      - phongkham_network
+    restart: unless-stopped
+
+  # Node.js for asset compilation (optional, can be removed after build)
+  node:
+    image: node:20-alpine
+    container_name: phongkham_node
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    command: sh -c "npm install && npm run dev"
+    ports:
+      - "5173:5173"
+    networks:
+      - phongkham_network
+
+networks:
+  phongkham_network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+  redis_data:
