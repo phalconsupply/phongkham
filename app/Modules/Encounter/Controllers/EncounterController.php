@@ -13,7 +13,7 @@ class EncounterController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Encounter::with(['patient', 'doctor'])
+        $query = Encounter::with(['patient', 'doctor', 'icd10Code'])
             ->orderBy('encounter_date', 'desc')
             ->orderBy('encounter_time', 'desc');
 
@@ -76,6 +76,9 @@ class EncounterController extends Controller
             'weight' => 'nullable|numeric|min:0|max:500',
             'height' => 'nullable|numeric|min:0|max:300',
             'spo2' => 'nullable|integer|min:0|max:100',
+            'icd10_code_id' => 'nullable|exists:icd10_codes,id',
+            'icd10_secondary' => 'nullable|array',
+            'icd10_secondary.*' => 'exists:icd10_codes,id',
         ]);
 
         // Calculate BMI if weight and height provided
@@ -91,7 +94,7 @@ class EncounterController extends Controller
 
     public function show(Encounter $encounter)
     {
-        $encounter->load(['patient', 'doctor']);
+        $encounter->load(['patient', 'doctor', 'icd10Code']);
 
         return Inertia::render('Encounter/Show', [
             'encounter' => $encounter,
@@ -100,7 +103,7 @@ class EncounterController extends Controller
 
     public function edit(Encounter $encounter)
     {
-        $encounter->load(['patient', 'doctor']);
+        $encounter->load(['patient', 'doctor', 'icd10Code']);
         $patients = Patient::orderBy('last_name')->orderBy('first_name')->get(['id', 'patient_code', 'first_name', 'last_name']);
         $doctors = User::role('doctor')->orderBy('name')->get(['id', 'name']);
 
@@ -133,6 +136,9 @@ class EncounterController extends Controller
             'weight' => 'nullable|numeric|min:0|max:500',
             'height' => 'nullable|numeric|min:0|max:300',
             'spo2' => 'nullable|integer|min:0|max:100',
+            'icd10_code_id' => 'nullable|exists:icd10_codes,id',
+            'icd10_secondary' => 'nullable|array',
+            'icd10_secondary.*' => 'exists:icd10_codes,id',
         ]);
 
         // Calculate BMI if weight and height provided

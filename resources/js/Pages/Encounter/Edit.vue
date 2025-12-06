@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import ICD10Search from '@/Components/ICD10Search.vue';
 
 const props = defineProps({
     encounter: Object,
@@ -26,6 +27,7 @@ const form = useForm({
     spo2: props.encounter.spo2 || '',
     physical_examination: props.encounter.physical_examination || '',
     diagnosis: props.encounter.diagnosis || '',
+    icd10_code_id: props.encounter.icd10_code_id || null,
     treatment_plan: props.encounter.treatment_plan || '',
     notes: props.encounter.notes || '',
 });
@@ -306,6 +308,15 @@ const submit = () => {
                                         placeholder="Chẩn đoán bệnh..."
                                         class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500"
                                     ></textarea>
+                                </div>
+
+                                <div>
+                                    <ICD10Search
+                                        v-model="form.icd10_code_id"
+                                        :patient-id="form.patient_id"
+                                        label="Mã ICD-10 Chẩn Đoán"
+                                        :error-message="form.errors.icd10_code_id"
+                                    />
                                 </div>
 
                                 <div>

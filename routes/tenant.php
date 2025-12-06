@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Modules\Patient\Controllers\PatientController;
 use App\Modules\Encounter\Controllers\EncounterController;
 use App\Modules\Prescription\Controllers\PrescriptionController;
+use App\Modules\Shared\Controllers\ICD10Controller;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,6 +33,11 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('patients', PatientController::class);
     Route::resource('encounters', EncounterController::class);
     Route::resource('prescriptions', PrescriptionController::class);
+    
+    // ICD-10 API Routes
+    Route::get('/api/icd10/search', [ICD10Controller::class, 'search'])->name('icd10.search');
+    Route::get('/api/icd10/{id}', [ICD10Controller::class, 'show'])->name('icd10.show');
+    Route::post('/api/icd10/validate', [ICD10Controller::class, 'validate'])->name('icd10.validate');
 });
 
 require __DIR__.'/auth.php';

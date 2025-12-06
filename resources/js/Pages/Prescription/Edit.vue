@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import ICD10Search from '@/Components/ICD10Search.vue';
 
 const props = defineProps({
     prescription: Object,
@@ -15,6 +16,7 @@ const form = useForm({
     doctor_id: props.prescription.doctor_id,
     prescription_date: props.prescription.prescription_date,
     diagnosis: props.prescription.diagnosis || '',
+    icd10_code_id: props.prescription.icd10_code_id || null,
     status: props.prescription.status,
     notes: props.prescription.notes || '',
     items: props.prescription.items.map(item => ({
@@ -153,6 +155,15 @@ const submit = () => {
                                         class="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-blue-500 focus:ring-blue-500"
                                     ></textarea>
                                     <div v-if="form.errors.diagnosis" class="text-sm text-red-600 mt-1">{{ form.errors.diagnosis }}</div>
+                                </div>
+
+                                <div class="md:col-span-2">
+                                    <ICD10Search
+                                        v-model="form.icd10_code_id"
+                                        :patient-id="form.patient_id"
+                                        label="Mã ICD-10 Chẩn Đoán"
+                                        :error-message="form.errors.icd10_code_id"
+                                    />
                                 </div>
 
                                 <div>

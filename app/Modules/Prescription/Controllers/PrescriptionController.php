@@ -16,7 +16,7 @@ class PrescriptionController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Prescription::with(['patient', 'doctor', 'encounter'])
+        $query = Prescription::with(['patient', 'doctor', 'encounter', 'icd10Code'])
             ->orderBy('prescription_date', 'desc');
 
         if ($request->filled('search')) {
@@ -69,6 +69,7 @@ class PrescriptionController extends Controller
             'prescription_date' => 'required|date',
             'diagnosis' => 'nullable|string',
             'notes' => 'nullable|string',
+            'icd10_code_id' => 'nullable|exists:icd10_codes,id',
             'items' => 'required|array|min:1',
             'items.*.medication_name' => 'required|string',
             'items.*.dosage' => 'nullable|string',
@@ -89,6 +90,7 @@ class PrescriptionController extends Controller
                 'prescription_date' => $validated['prescription_date'],
                 'diagnosis' => $validated['diagnosis'] ?? null,
                 'notes' => $validated['notes'] ?? null,
+                'icd10_code_id' => $validated['icd10_code_id'] ?? null,
             ]);
 
             foreach ($validated['items'] as $item) {
@@ -106,7 +108,7 @@ class PrescriptionController extends Controller
 
     public function show(Prescription $prescription)
     {
-        $prescription->load(['patient', 'doctor', 'encounter', 'items']);
+        $prescription->load(['patient', 'doctor', 'encounter', 'items', 'icd10Code']);
 
         return Inertia::render('Prescription/Show', [
             'prescription' => $prescription,
@@ -115,7 +117,7 @@ class PrescriptionController extends Controller
 
     public function edit(Prescription $prescription)
     {
-        $prescription->load(['patient', 'doctor', 'encounter', 'items']);
+        $prescription->load(['patient', 'doctor', 'encounter', 'items', 'icd10Code']);
         $patients = Patient::orderBy('last_name')->orderBy('first_name')->get(['id', 'patient_code', 'first_name', 'last_name']);
         $doctors = User::role('doctor')->orderBy('name')->get(['id', 'name']);
         $encounters = Encounter::with('patient')
@@ -142,6 +144,7 @@ class PrescriptionController extends Controller
             'diagnosis' => 'nullable|string',
             'notes' => 'nullable|string',
             'status' => 'required|in:active,completed,cancelled',
+            'icd10_code_id' => 'nullable|exists:icd10_codes,id',
             'items' => 'required|array|min:1',
             'items.*.medication_name' => 'required|string',
             'items.*.dosage' => 'nullable|string',
@@ -163,6 +166,7 @@ class PrescriptionController extends Controller
                 'diagnosis' => $validated['diagnosis'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'status' => $validated['status'],
+                'icd10_code_id' => $validated['icd10_code_id'] ?? null,
             ]);
 
             // Delete old items and create new ones

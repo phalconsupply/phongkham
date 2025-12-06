@@ -24,6 +24,8 @@ class Encounter extends Model
         'history',
         'examination',
         'diagnosis',
+        'icd10_code_id',
+        'icd10_secondary',
         'treatment_plan',
         'notes',
         'temperature',
@@ -42,6 +44,7 @@ class Encounter extends Model
         'encounter_date' => 'date',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
+        'icd10_secondary' => 'array',
     ];
 
     protected static function boot()
@@ -76,6 +79,11 @@ class Encounter extends Model
     public function doctor()
     {
         return $this->belongsTo(User::class, 'doctor_id');
+    }
+
+    public function icd10Code()
+    {
+        return $this->belongsTo(\App\Models\ICD10Code::class, 'icd10_code_id');
     }
 
     // Accessors

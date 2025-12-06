@@ -22,6 +22,7 @@ class Prescription extends Model
         'diagnosis',
         'notes',
         'status',
+        'icd10_code_id',
     ];
 
     protected $casts = [
@@ -70,6 +71,11 @@ class Prescription extends Model
     public function items()
     {
         return $this->hasMany(PrescriptionItem::class);
+    }
+
+    public function icd10Code()
+    {
+        return $this->belongsTo(\App\Models\ICD10Code::class, 'icd10_code_id');
     }
 
     // Accessors
