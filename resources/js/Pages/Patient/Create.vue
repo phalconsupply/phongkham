@@ -1,10 +1,16 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
+import QRScanner from '@/Components/QRScanner.vue';
+
+const showQRScanner = ref(false);
+const scanSuccess = ref(false);
+const scanMessage = ref('');
 
 const form = useForm({
     first_name: '',
@@ -27,6 +33,34 @@ const form = useForm({
     blood_type: '',
 });
 
+// Handle QR scan success
+const handleQRScan = (cccdData) => {
+    // Fill form with CCCD data
+    form.id_number = cccdData.id_number || form.id_number;
+    form.first_name = cccdData.first_name || form.first_name;
+    form.last_name = cccdData.last_name || form.last_name;
+    form.date_of_birth = cccdData.date_of_birth || form.date_of_birth;
+    form.gender = cccdData.gender || form.gender;
+    form.address = cccdData.address || form.address;
+    
+    // Show success message
+    scanSuccess.value = true;
+    scanMessage.value = `✅ Đã quét thành công: ${cccdData.full_name}`;
+    
+    // Close scanner
+    showQRScanner.value = false;
+    
+    // Hide success message after 5 seconds
+    setTimeout(() => {
+        scanSuccess.value = false;
+    }, 5000);
+};
+
+// Handle QR scan error
+const handleQRError = (error) => {
+    console.error('QR Scan Error:', error);
+};
+
 const submit = () => {
     form.post(route('patients.store'));
 };
@@ -44,8 +78,30 @@ const submit = () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+                <!-- Success Message -->
+                <div
+                    v-if="scanSuccess"
+                    class="mb-4 rounded-lg bg-green-100 p-4 text-green-800 dark:bg-green-900 dark:text-green-200"
+                >
+                    {{ scanMessage }}
+                </div>
+
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
+                        <!-- QR Scanner Button -->
+                        <div class="flex justify-end">
+                            <button
+                                type="button"
+                                @click="showQRScanner = true"
+                                class="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-white hover:bg-blue-700 transition-colors min-h-[48px]"
+                            >
+                                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                </svg>
+                                <span>Quét CCCD</span>
+                            </button>
+                        </div>
+
                         <!-- Thông Tin Cá Nhân -->
                         <div class="space-y-6">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-white border-b pb-2">
@@ -289,6 +345,14 @@ const submit = () => {
                                 <textarea
                                     id="notes"
                                     v-model="form.notes"
+
+        <!-- QR Scanner Modal -->
+        <QRScanner
+            :show="showQRScanner"
+            @scanned="handleQRScan"
+            @error="handleQRError"
+            @close="showQRScanner = false"
+        />
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                     rows="3"
                                 ></textarea>

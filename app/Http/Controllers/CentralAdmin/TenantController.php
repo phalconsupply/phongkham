@@ -13,9 +13,22 @@ use Inertia\Inertia;
 
 class TenantController extends Controller
 {
+    /**
+     * Constructor - Ensure we're NEVER in tenant context
+     * Middleware should prevent this, but double-check for security
+     */
+    public function __construct()
+    {
+        // Abort if somehow accessed from tenant context
+        if (tenancy()->initialized) {
+            abort(403, 'Central admin cannot be accessed from tenant domains.');
+        }
+    }
+
     public function index()
     {
-        abort_unless(auth()->user()->hasRole('admin'), 403, 'Unauthorized');
+        // Middleware already checks, but keep for extra security
+        abort_unless(auth()->check() && auth()->user()->hasRole('admin'), 403, 'Unauthorized');
         
         return Inertia::render('CentralAdmin/Tenants/Index', [
             'tenants' => Tenant::with('domains')->get()
@@ -24,19 +37,19 @@ class TenantController extends Controller
 
     public function create()
     {
-        abort_unless(auth()->user()->hasRole('admin'), 403, 'Unauthorized');
+        abort_unless(auth()->check() && auth()->user()->hasRole('admin'), 403, 'Unauthorized');
         
         return Inertia::render('CentralAdmin/Tenants/Create');
     }
 
     public function store(Request $request)
     {
-        abort_unless(auth()->user()->hasRole('admin'), 403, 'Unauthorized');
+        abort_unless(auth()->check() && auth()->user()->hasRole('admin'), 403, 'Unauthorized');
         $validated = $request->validate([
             'subdomain' => 'required|string|unique:domains,domain',
             'clinic_name' => 'required|string|max:255',
             'admin_name' => 'required|string|max:255',
-            'admin_email' => 'required|email|unique:users,email',
+            'admin_email' => 'required|email', // Will validate uniqueness in tenant context
             'admin_password' => 'required|string|min:8',
             'primary_color' => 'nullable|string',
             'logo' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:2048',

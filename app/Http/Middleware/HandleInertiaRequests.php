@@ -29,13 +29,29 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $isCentralAdmin = false;
+        
+        if ($user) {
+            // Check if user is a TRUE central admin (matches whitelist)
+            $centralAdminWhitelist = [
+                'admin@phongkham.test',
+            ];
+            
+            // Must have admin role AND be in whitelist AND NOT in tenant context
+            $isCentralAdmin = $user->hasRole('admin') 
+                && in_array($user->email, $centralAdminWhitelist)
+                && !tenancy()->initialized;
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user() ? [
-                    ...$request->user()->toArray(),
-                    'roles' => $request->user()->roles->pluck('name')->toArray(),
-                    'permissions' => $request->user()->getAllPermissions()->pluck('name')->toArray(),
+                'user' => $user ? [
+                    ...$user->toArray(),
+                    'roles' => $user->roles->pluck('name')->toArray(),
+                    'permissions' => $user->getAllPermissions()->pluck('name')->toArray(),
+                    'isCentralAdmin' => $isCentralAdmin,
                 ] : null,
             ],
         ];

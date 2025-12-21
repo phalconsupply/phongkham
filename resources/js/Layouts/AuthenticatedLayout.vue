@@ -40,11 +40,18 @@ const showingNavigationDropdown = ref(false);
                                     Bảng Điều Khiển
                                 </NavLink>
                                 <NavLink
-                                    v-if="$page.props.auth.user.roles?.includes('admin')"
+                                    v-if="$page.props.auth.user?.isCentralAdmin"
                                     :href="route('central.tenants.index')"
-                                    :active="route().current('central.*')"
+                                    :active="route().current('central.tenants.*')"
                                 >
                                     Quản Lý Tenant
+                                </NavLink>
+                                <NavLink
+                                    v-if="$page.props.auth.user?.isCentralAdmin"
+                                    :href="route('central.role-permissions.index')"
+                                    :active="route().current('central.role-permissions.*')"
+                                >
+                                    Phân Quyền
                                 </NavLink>
                                 <template v-if="route().has('patients.index')">
                                     <NavLink
@@ -174,11 +181,18 @@ const showingNavigationDropdown = ref(false);
                             Bảng Điều Khiển
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
-                            v-if="$page.props.auth.user.roles?.includes('admin')"
+                            v-if="$page.props.auth.user?.isCentralAdmin"
                             :href="route('central.tenants.index')"
-                            :active="route().current('central.*')"
+                            :active="route().current('central.tenants.*')"
                         >
                             Quản Lý Tenant
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            v-if="$page.props.auth.user?.isCentralAdmin"
+                            :href="route('central.role-permissions.index')"
+                            :active="route().current('central.role-permissions.*')"
+                        >
+                            Phân Quyền
                         </ResponsiveNavLink>
                         <template v-if="route().has('patients.index')">
                             <ResponsiveNavLink

@@ -20,8 +20,12 @@ use App\Modules\Shared\Controllers\ICD10Controller;
 |
 */
 
+// Root route - redirect to dashboard if authenticated, otherwise to login
 Route::get('/', function () {
-    return 'This is your multi-tenant application. The id of the current tenant is ' . tenant('id');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
 });
 
 // Module Routes
