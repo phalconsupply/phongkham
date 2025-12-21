@@ -22,21 +22,31 @@ echo -e "${GREEN}Domain: ${DOMAIN}${NC}"
 echo -e "${GREEN}=================================${NC}"
 
 # Check if running as root
-if [[ $EUID -eq 0 ]]; then
-   echo -e "${RED}Don't run this script as root${NC}" 
+if [[ $EUID -ne 0 ]]; then
+   echo -e "${RED}This script must be run as root${NC}" 
    exit 1
+fi
+
+echo -e "${YELLOW}Step 0: Create Deploy User${NC}"
+# Create a deploy user if not exists
+if ! id "deploy" &>/dev/null; then
+    useradd -m -s /bin/bash deploy
+    usermod -aG sudo deploy
+    echo "User 'deploy' created"
+else
+    echo "User 'deploy' already exists"
 fi
 
 echo -e "${YELLOW}Step 1: System Update${NC}"
 sudo apt update && sudo apt upgrade -y
 
 echo -e "${YELLOW}Step 2: Install Required Packages${NC}"
-sudo apt install -y software-properties-common curl wget git unzip
+apt install -y software-properties-common curl wget git unzip
 
 echo -e "${YELLOW}Step 3: Install PHP ${PHP_VERSION}${NC}"
-sudo add-apt-repository ppa:ondrej/php -y
-sudo apt update
-sudo apt install -y php${PHP_VERSION} \
+add-apt-repository ppa:ondrej/php -y
+apt update
+apt install -y php${PHP_VERSION} \
     php${PHP_VERSION}-fpm \
     php${PHP_VERSION}-cli \
     php${PHP_VERSION}-common \
@@ -52,63 +62,69 @@ sudo apt install -y php${PHP_VERSION} \
 
 echo -e "${YELLOW}Step 4: Install Composer${NC}"
 curl -sS https://getcomposer.org/installer | php
-sudo mv composer.phar /usr/local/bin/composer
+mv composer.phar /usr/local/bin/composer
 composer --version
 
 echo -e "${YELLOW}Step 5: Install Node.js ${NODE_VERSION}${NC}"
-curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | sudo -E bash -
-sudo apt install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
+apt install -y nodejs
 node --version
 npm --version
 
 echo -e "${YELLOW}Step 6: Install MySQL ${MYSQL_VERSION}${NC}"
-sudo apt install -y mysql-server
-sudo systemctl start mysql
-sudo systemctl enable mysql
+apt install -y mysql-server
+systemctl start mysql
+systemctl enable mysql
 
 echo -e "${YELLOW}Step 7: Install Redis${NC}"
-sudo apt install -y redis-server
-sudo systemctl start redis-server
-sudo systemctl enable redis-server
+apt install -y redis-server
+systemctl start redis-server
+systemctl enable redis-server
 
 echo -e "${YELLOW}Step 8: Install Nginx${NC}"
-sudo apt install -y nginx
-sudo systemctl start nginx
-sudo systemctl enable nginx
+apt install -y nginx
+systemctl start nginx
+systemctl enable nginx
 
 echo -e "${YELLOW}Step 9: Install Certbot (SSL)${NC}"
-sudo apt install -y certbot python3-certbot-nginx
+apt install -y certbot python3-certbot-nginx
 
 echo -e "${YELLOW}Step 10: Configure PHP-FPM${NC}"
 # Update PHP-FPM configuration
-sudo sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini
-sudo sed -i 's/post_max_size = 8M/post_max_size = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini
-sudo sed -i 's/memory_limit = 128M/memory_limit = 256M/' /etc/php/${PHP_VERSION}/fpm/php.ini
-sudo sed -i 's/max_execution_time = 30/max_execution_time = 300/' /etc/php/${PHP_VERSION}/fpm/php.ini
+sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini
+sed -i 's/post_max_size = 8M/post_max_size = 20M/' /etc/php/${PHP_VERSION}/fpm/php.ini
+sed -i 's/memory_limit = 128M/memory_limit = 256M/' /etc/php/${PHP_VERSION}/fpm/php.ini
+sed -i 's/max_execution_time = 30/max_execution_time = 300/' /etc/php/${PHP_VERSION}/fpm/php.ini
 
-sudo systemctl restart php${PHP_VERSION}-fpm
+systemctl restart php${PHP_VERSION}-fpm
 
 echo -e "${YELLOW}Step 11: Configure Firewall${NC}"
-sudo ufw allow 'Nginx Full'
-sudo ufw allow OpenSSH
-sudo ufw --force enable
+ufw allow 'Nginx Full'
+ufw allow OpenSSH
+ufw --force enable
 
 echo -e "${YELLOW}Step 12: Create Application Directory${NC}"
-sudo mkdir -p ${APP_PATH}
-sudo chown -R $USER:www-data ${APP_PATH}
-sudo chmod -R 755 ${APP_PATH}
+mkdir -p ${APP_PATH}
+chown -R deploy:www-data ${APP_PATH}
+chmod -R 755 ${APP_PATH}
 
 echo -e "${GREEN}=================================${NC}"
 echo -e "${GREEN}Server Setup Complete!${NC}"
 echo -e "${GREEN}=================================${NC}"
 echo ""
-echo -e "${YELLOW}Next Steps:${NC}"
-echo "1. Configure MySQL root password: sudo mysql_secure_installation"
-echo "2. Create database and user"
-echo "3. Clone repository to ${APP_PATH}"
-echo "4. Configure Nginx virtual host"
-echo "5. Setup SSL certificate"
+echo -e "${YELLOW}Deploy User Created:${NC}"
+echo "Username: deploy"
+echo "Password: (set with: passwd deploy)"
 echo ""
-echo -e "${YELLOW}Run these commands:${NC}"
-echo "sudo mysql_secure_installation"
+echo -e "${YELLOW}Next Steps:${NC}"
+echo "1. Set password for deploy user: passwd deploy"
+echo "2. Configure MySQL root password: mysql_secure_installation"
+echo "3. Switch to deploy user: su - deploy"
+echo "4. Clone repository to ${APP_PATH}"
+echo "5. Configure Nginx virtual host"
+echo "6. Setup SSL certificate"
+echo ""
+echo -e "${YELLOW}Quick Commands:${NC}"
+echo "passwd deploy"
+echo "mysql_secure_installation"
 echo ""
