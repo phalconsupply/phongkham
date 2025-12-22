@@ -54,6 +54,11 @@ class HandleInertiaRequests extends Middleware
                     'isCentralAdmin' => $isCentralAdmin,
                 ] : null,
             ],
+            'tenant' => tenancy()->initialized ? [
+                'id' => tenant('id'),
+                'domain' => $request->getHost(),
+            ] : null,
+            'appUrl' => $request->getSchemeAndHttpHost(),
         ];
     }
 }

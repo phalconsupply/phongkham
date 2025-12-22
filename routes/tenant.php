@@ -44,4 +44,4 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/api/icd10/validate', [ICD10Controller::class, 'validate'])->name('icd10.validate');
 });
 
-require __DIR__.'/auth.php';
+// Tenant auth routes are loaded separately by tenancy middleware
