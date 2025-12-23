@@ -1,22 +1,14 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref, onErrorCaptured } from 'vue';
+import { ref } from 'vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 
-// Temporarily disable QRScanner for debugging
+// DISABLED: QRScanner for mobile debugging
 // const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
-
-// Error tracking for mobile debugging
-const renderError = ref(null);
-onErrorCaptured((err, instance, info) => {
-    console.error('Error captured:', err, info);
-    renderError.value = err.toString();
-    return false;
-});
 
 const showQRScanner = ref(false);
 const scanSuccess = ref(false);
@@ -79,49 +71,12 @@ const submit = () => {
 <template>
     <Head title="Thêm Bệnh Nhân Mới" />
 
-    <div style="background: red; color: white; padding: 20px; min-height: 100vh;">
-        <h1 style="font-size: 24px; margin-bottom: 20px;">MOBILE DEBUG TEST</h1>
-        <p>If you see this, Vue is working!</p>
-        <p>Error: {{ renderError || 'No error' }}</p>
-        <button @click="testClick" style="padding: 10px; background: blue; color: white; border: none; margin-top: 20px;">
-            Click Test
-        </button>
-        <p>Clicked: {{ clickCount }}</p>
-    </div>
-</template>
-
-<script setup>
-import { Head } from '@inertiajs/vue3';
-import { ref, onErrorCaptured } from 'vue';
-
-const renderError = ref(null);
-const clickCount = ref(0);
-
-const testClick = () => {
-    clickCount.value++;
-    alert('Button clicked!');
-};
-
-onErrorCaptured((err) => {
-    renderError.value = err.toString();
-    return false;
-});
-</script>
+    <AuthenticatedLayout>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                 Thêm Bệnh Nhân Mới
             </h2>
         </template>
-
-        <!-- Error Display for Mobile Debugging -->
-        <div v-if="renderError" class="py-12">
-            <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-                    <strong class="font-bold">Error on Mobile: </strong>
-                    <span class="block sm:inline">{{ renderError }}</span>
-                </div>
-            </div>
-        </div>
 
         <div class="py-12">
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
@@ -135,8 +90,7 @@ onErrorCaptured((err) => {
 
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
-                        <!-- QR Scanner Button (Temporarily disabled) -->
-                        <!--
+                        <!-- QR Scanner Button -->
                         <div class="flex justify-end">
                             <button
                                 type="button"
@@ -149,7 +103,6 @@ onErrorCaptured((err) => {
                                 <span>Quét CCCD</span>
                             </button>
                         </div>
-                        -->
 
                         <!-- Thông Tin Cá Nhân -->
                         <div class="space-y-6">
@@ -395,22 +348,13 @@ onErrorCaptured((err) => {
                                     id="notes"
                                     v-model="form.notes"
 
-        <!-- QR Scanner Modal (Temporarily disabled for debugging) -->
-        <!--
-        <Suspense v-if="showQRScanner">
-            <QRScanner
-                :show="showQRScanner"
-                @scanned="handleQRScan"
-                @error="handleQRError"
-                @close="showQRScanner = false"
-            />
-            <template #fallback>
-                <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div class="text-white">Đang tải...</div>
-                </div>
-            </template>
-        </Suspense>
-        -->
+        <!-- QR Scanner Modal -->
+        <QRScanner
+            :show="showQRScanner"
+            @scanned="handleQRScan"
+            @error="handleQRError"
+            @close="showQRScanner = false"
+        />
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                     rows="3"
                                 ></textarea>
