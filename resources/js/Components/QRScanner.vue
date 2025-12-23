@@ -241,17 +241,7 @@ onBeforeUnmount(() => {
             <div v-if="isInitializing" class="mb-4 rounded-lg bg-blue-100 p-4 text-center">
                 <p class="text-blue-800">Đang yêu cầu quyền truy cập camera...</p>
             </div>
-                    📷 Camera
-                </button>
-                <button
-                    @click="scanMode = 'file'; stopScanning()"
-                    :class="[
-                        'flex-1 rounded-lg px-4 py-2 text-sm font-medium',
-                        scanMode === 'file'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                    ]"
-                >
+
             <!-- Error Message -->
             <div v-if="errorMessage" class="mb-4 rounded-lg bg-red-100 p-3 text-sm text-red-800">
                 {{ errorMessage }}
@@ -290,6 +280,7 @@ onBeforeUnmount(() => {
 }
 
 #qr-reader video {
+    width: 100%;
     border-radius: 0.5rem;
 }
 </style>
