@@ -2,14 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { Html5Qrcode } from 'html5-qrcode';
 
-const emit = defineEmits(['scanned', 'error', 'close']);
-
-const props = defineProps({
-    show: {
-        type: Boolean,
-        default: false,
-    },
-});
+const emit = defineEmits(['scan-success', 'scan-error', 'close']);
 
 const scannerRef = ref(null);
 const isScanning = ref(false);
@@ -18,6 +11,8 @@ const html5QrCode = ref(null);
 const devices = ref([]);
 const selectedDeviceId = ref(null);
 const scanMode = ref('camera'); // 'camera' or 'file'
+const permissionRequested = ref(false);
+const isInitializing = ref(false);
 
 // Parse CCCD QR Code data
 const parseCCCDData = (qrData) => {
@@ -74,6 +69,22 @@ const parseCCCDData = (qrData) => {
 const initCamera = async () => {
     try {
         errorMessage.value = '';
+        isInitializing.value = true;
+        
+        // Request camera permission explicitly
+        if (!permissionRequested.value) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                // Stop the stream immediately, we just needed permission
+                stream.getTracks().forEach(track => track.stop());
+                permissionRequested.value = true;
+            } catch (permError) {
+                console.error('Camera permission error:', permError);
+                errorMessage.value = 'Vui lòng cấp quyền truy cập camera trong cài đặt trình duyệt.';
+                isInitializing.value = false;
+                return;
+            }
+        }
         
         // Get available cameras
         const devicesInfo = await Html5Qrcode.getCameras();
@@ -83,7 +94,8 @@ const initCamera = async () => {
             // Prefer back camera on mobile
             const backCamera = devicesInfo.find(device => 
                 device.label.toLowerCase().includes('back') || 
-                device.label.toLowerCase().includes('rear')
+                device.label.toLowerCase().includes('rear') ||
+                device.label.toLowerCase().includes('environment')
             );
             selectedDeviceId.value = backCamera ? backCamera.id : devicesInfo[0].id;
             
@@ -91,9 +103,12 @@ const initCamera = async () => {
         } else {
             errorMessage.value = 'Không tìm thấy camera. Vui lòng cho phép truy cập camera.';
         }
+        
+        isInitializing.value = false;
     } catch (error) {
         console.error('Error initializing camera:', error);
-        errorMessage.value = 'Không thể khởi động camera: ' + error.message;
+        errorMessage.value = 'Không thể khởi động camera. Vui lòng kiểm tra quyền truy cập camera.';
+        isInitializing.value = false;
     }
 };
 
@@ -128,11 +143,11 @@ const startScanning = async () => {
 const onScanSuccess = (decodedText, decodedResult) => {
     try {
         const cccdData = parseCCCDData(decodedText);
-        emit('scanned', cccdData);
+        emit('scan-success', cccdData);
         stopScanning();
     } catch (error) {
         errorMessage.value = error.message;
-        emit('error', error.message);
+        emit('scan-error', error.message);
     }
 };
 
@@ -196,36 +211,25 @@ const close = async () => {
 
 // Lifecycle hooks
 onMounted(() => {
-    if (props.show && scanMode.value === 'camera') {
-        initCamera();
-    }
+    initCamera();
 });
 
 onBeforeUnmount(() => {
     stopScanning();
 });
-
-// Watch for show prop changes
-watch(() => props.show, async (newVal) => {
-    if (newVal && scanMode.value === 'camera') {
-        await initCamera();
-    } else if (!newVal) {
-        await stopScanning();
-    }
-});
 </script>
 
 <template>
-    <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-        <div class="relative w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4">
+        <div class="relative w-full max-w-2xl rounded-lg bg-white p-4 sm:p-6 shadow-xl">
             <!-- Header -->
             <div class="mb-4 flex items-center justify-between">
-                <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
+                <h3 class="text-lg sm:text-xl font-semibold text-gray-900">
                     Quét Mã QR Căn Cước
                 </h3>
                 <button
                     @click="close"
-                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-900 dark:hover:bg-gray-700 dark:hover:text-white"
+                    class="rounded-lg p-2 text-gray-400 hover:bg-gray-200 hover:text-gray-900"
                 >
                     <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -233,17 +237,10 @@ watch(() => props.show, async (newVal) => {
                 </button>
             </div>
 
-            <!-- Mode Selection -->
-            <div class="mb-4 flex gap-2">
-                <button
-                    @click="scanMode = 'camera'; initCamera()"
-                    :class="[
-                        'flex-1 rounded-lg px-4 py-2 text-sm font-medium',
-                        scanMode === 'camera'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                    ]"
-                >
+            <!-- Initializing Message -->
+            <div v-if="isInitializing" class="mb-4 rounded-lg bg-blue-100 p-4 text-center">
+                <p class="text-blue-800">Đang yêu cầu quyền truy cập camera...</p>
+            </div>
                     📷 Camera
                 </button>
                 <button
@@ -255,17 +252,13 @@ watch(() => props.show, async (newVal) => {
                             : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                     ]"
                 >
-                    🖼️ Chọn Ảnh
-                </button>
-            </div>
-
             <!-- Error Message -->
-            <div v-if="errorMessage" class="mb-4 rounded-lg bg-red-100 p-3 text-sm text-red-800 dark:bg-red-900 dark:text-red-200">
+            <div v-if="errorMessage" class="mb-4 rounded-lg bg-red-100 p-3 text-sm text-red-800">
                 {{ errorMessage }}
             </div>
 
             <!-- Scanner Area -->
-            <div v-if="scanMode === 'camera'" class="relative">
+            <div class="relative">
                 <!-- QR Reader Container -->
                 <div id="qr-reader" class="rounded-lg overflow-hidden"></div>
 
@@ -280,34 +273,10 @@ watch(() => props.show, async (newVal) => {
                 </div>
 
                 <!-- Instructions -->
-                <div class="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
-                    <p>📱 Di chuyển camera để căn chỉnh mã QR vào khung</p>
-                    <p class="mt-1">Mã QR nằm ở mặt sau thẻ căn cước</p>
+                <div class="mt-4 text-center text-sm text-gray-600">
+                    <p>📱 Đưa mã QR trên Căn Cước vào khung quét</p>
+                    <p class="mt-2 text-xs text-gray-500">Camera sẽ tự động quét khi phát hiện mã QR</p>
                 </div>
-            </div>
-
-            <!-- File Upload -->
-            <div v-else class="text-center">
-                <label class="block">
-                    <div class="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-12 hover:border-blue-500 dark:border-gray-600">
-                        <svg class="mb-3 h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <p class="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Chụp hoặc chọn ảnh mã QR căn cước
-                        </p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            PNG, JPG, JPEG (MAX. 10MB)
-                        </p>
-                    </div>
-                    <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        @change="handleFileUpload"
-                        class="hidden"
-                    />
-                </label>
             </div>
         </div>
     </div>
