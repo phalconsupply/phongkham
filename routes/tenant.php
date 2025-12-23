@@ -35,6 +35,9 @@ Route::middleware(['auth'])->group(function () {
     })->name('dashboard');
     
     Route::resource('patients', PatientController::class);
+    Route::get('/patients-mobile-test', function () {
+        return inertia('Patient/MobileTest');
+    })->name('patients.mobile.test');
     Route::resource('encounters', EncounterController::class);
     Route::resource('prescriptions', PrescriptionController::class);
     
