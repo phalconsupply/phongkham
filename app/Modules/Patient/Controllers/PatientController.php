@@ -33,7 +33,7 @@ class PatientController extends Controller
 
     public function create()
     {
-        return Inertia::render('Patient/Create');
+        return Inertia::render('Patient/CreateSimple');
     }
 
     public function store(Request $request)
