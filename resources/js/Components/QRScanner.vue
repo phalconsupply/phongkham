@@ -157,20 +157,39 @@ const startScanning = async () => {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
                       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        // Config optimized for different platforms
+        // Config optimized for iOS vs Android
         const config = {
-            fps: isIOS ? 5 : 10, // Lower FPS for iOS
-            qrbox: isIOS 
-                ? { width: 300, height: 300 }  // Larger box for iOS
-                : { width: 250, height: 250 },
+            fps: isIOS ? 10 : 10, // Keep same FPS for both
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                // Dynamic QR box - 70% of smallest dimension
+                let minEdgePercentage = 70;
+                let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+                let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage / 100);
+                return {
+                    width: qrboxSize,
+                    height: qrboxSize
+                };
+            },
             aspectRatio: 1.0,
             disableFlip: false,
+            // Specify QR code format explicitly
+            formatsToSupport: [0], // 0 = QR_CODE in Html5QrcodeSupportedFormats
+            // Advanced config for better iOS support
+            experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+            },
             videoConstraints: {
                 facingMode: { ideal: 'environment' },
-                width: { ideal: 1280 },
-                height: { ideal: 720 }
+                width: { min: 640, ideal: 1280, max: 1920 },
+                height: { min: 480, ideal: 720, max: 1080 },
+                // iOS needs explicit focus mode
+                focusMode: { ideal: 'continuous' },
+                // Better lighting adjustment for iOS
+                whiteBalance: { ideal: 'continuous' }
             }
         };
+
+        console.log('Starting scanner with config:', { isIOS, selectedDevice: selectedDeviceId.value });
 
         await html5QrCode.value.start(
             selectedDeviceId.value,
@@ -180,9 +199,10 @@ const startScanning = async () => {
         );
 
         isScanning.value = true;
+        console.log('Scanner started successfully');
     } catch (error) {
         console.error('Error starting scanner:', error);
-        errorMessage.value = 'Lỗi khi bắt đầu quét: ' + error.message;
+        errorMessage.value = 'Lỗi khi bắt đầu quét. Vui lòng thử lại: ' + error.message;
     }
 };
 
@@ -311,8 +331,15 @@ onBeforeUnmount(() => {
 
                 <!-- Instructions -->
                 <div class="mt-4 text-center text-sm text-gray-600">
-                    <p>📱 Đưa mã QR trên Căn Cước vào khung quét</p>
-                    <p class="mt-2 text-xs text-gray-500">Camera sẽ tự động quét khi phát hiện mã QR</p>
+                    <p class="font-semibold mb-2">📱 Hướng dẫn quét CCCD:</p>
+                    <ol class="text-left max-w-md mx-auto space-y-1 text-xs">
+                        <li>1. Mã QR nằm ở <strong>mặt SAU</strong> của thẻ CCCD</li>
+                        <li>2. Giữ CCCD cách camera <strong>15-20cm</strong></li>
+                        <li>3. Đảm bảo <strong>đủ ánh sáng</strong> và không bị phản quang</li>
+                        <li>4. Giữ CCCD <strong>thẳng và đứng yên</strong> vài giây</li>
+                        <li>5. <strong>iPhone</strong>: Có thể cần 3-5 giây để camera focus</li>
+                    </ol>
+                    <p class="mt-3 text-xs text-gray-500">Camera sẽ tự động quét khi phát hiện mã QR</p>
                 </div>
             </div>
         </div>
