@@ -33,6 +33,35 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = $request->user();
+        
+        // Check if user is central admin (in whitelist)
+        $centralAdminWhitelist = [
+            'admin@phongkham.test',
+        ];
+        
+        $isCentralAdmin = $user->hasRole('admin') && in_array($user->email, $centralAdminWhitelist);
+        
+        // If NOT central admin, redirect to tenant subdomain
+        if (!$isCentralAdmin) {
+            // Get user's tenant from their email or a tenant_id field
+            // For now, extract tenant ID from email pattern (adminpk1@phongkham.test -> pk1)
+            if (preg_match('/^admin(\w+)@/', $user->email, $matches)) {
+                $tenantId = $matches[1];
+                
+                // Get tenant's primary domain
+                $tenant = \App\Models\Tenant::find($tenantId);
+                if ($tenant && $tenant->domains->isNotEmpty()) {
+                    $tenantDomain = $tenant->domains->first()->domain;
+                    $protocol = $request->secure() ? 'https' : 'http';
+                    $intendedUrl = session()->pull('url.intended');
+                    
+                    // Redirect to tenant domain
+                    return redirect()->away("{$protocol}://{$tenantDomain}/dashboard");
+                }
+            }
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 
