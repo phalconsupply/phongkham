@@ -1,12 +1,14 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, defineAsyncComponent } from 'vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
-import QRScanner from '@/Components/QRScanner.vue';
+
+// Lazy load QRScanner to prevent mobile errors
+const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
 
 const showQRScanner = ref(false);
 const scanSuccess = ref(false);
