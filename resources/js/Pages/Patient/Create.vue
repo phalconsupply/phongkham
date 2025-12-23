@@ -348,13 +348,20 @@ const submit = () => {
                                     id="notes"
                                     v-model="form.notes"
 
-        <!-- QR Scanner Modal -->
-        <QRScanner
-            :show="showQRScanner"
-            @scanned="handleQRScan"
-            @error="handleQRError"
-            @close="showQRScanner = false"
-        />
+        <!-- QR Scanner Modal (only load when needed) -->
+        <Suspense v-if="showQRScanner">
+            <QRScanner
+                :show="showQRScanner"
+                @scanned="handleQRScan"
+                @error="handleQRError"
+                @close="showQRScanner = false"
+            />
+            <template #fallback>
+                <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+                    <div class="text-white">Đang tải...</div>
+                </div>
+            </template>
+        </Suspense>
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                     rows="3"
                                 ></textarea>
