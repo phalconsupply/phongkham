@@ -234,17 +234,21 @@ const form = useForm({
 
 // Handle QR scan success
 const handleQRScan = (cccdData) => {
+    // Map CCCD data to form fields
     form.id_number = cccdData.id_number || form.id_number;
     form.first_name = cccdData.first_name || form.first_name;
     form.last_name = cccdData.last_name || form.last_name;
     form.date_of_birth = cccdData.date_of_birth || form.date_of_birth;
     form.gender = cccdData.gender || form.gender;
     form.address = cccdData.address || form.address;
+    form.city = cccdData.city || form.city;
+    form.province = cccdData.province || form.province;
     
     scanSuccess.value = true;
-    scanMessage.value = `✅ Đã quét thành công: ${cccdData.full_name}`;
+    scanMessage.value = `✅ Đã quét thành công CCCD: ${cccdData.full_name}`;
     showQRScanner.value = false;
     
+    // Hide success message after 5 seconds
     setTimeout(() => {
         scanSuccess.value = false;
         scanMessage.value = '';

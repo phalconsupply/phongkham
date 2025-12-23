@@ -17,47 +17,81 @@ const isInitializing = ref(false);
 // Parse CCCD QR Code data
 const parseCCCDData = (qrData) => {
     try {
-        // CCCD QR format: ID|FULLNAME|DOB|GENDER|ADDRESS|ISSUE_DATE
-        // Example: 001234567890|NGUYEN VAN A|01011990|Nam|123 Duong ABC, Phuong XYZ|01012020
+        // CCCD QR format (based on actual Vietnamese CCCD):
+        // Index 0: CCCD number (12 digits)
+        // Index 1: Old CMND number (optional)
+        // Index 2: Full name
+        // Index 3: Date of birth (DD/MM/YYYY)
+        // Index 4: Gender (Nam/Nữ)
+        // Index 5: Address
+        // Index 6: Issue date (DD/MM/YYYY)
+        
         const parts = qrData.split('|');
         
-        if (parts.length < 5) {
-            throw new Error('Invalid CCCD QR format');
+        console.log('CCCD QR Parts:', parts); // Debug log
+        
+        if (parts.length < 6) {
+            throw new Error('Invalid CCCD QR format - not enough fields');
         }
 
-        // Parse date of birth (DDMMYYYY or DD/MM/YYYY)
-        let dob = parts[2].replace(/\//g, '');
+        // Get CCCD number (first field)
+        const cccdNumber = parts[0].trim();
+        
+        // Get full name (index 2)
+        const fullName = parts[2].trim();
+        
+        // Split full name into first and last name
+        // Vietnamese names: Họ + Tên đệm + Tên
+        // Example: "Lê Vũ Thảo Vi" -> lastName: "Lê Vũ Thảo", firstName: "Vi"
+        const nameParts = fullName.split(' ').filter(p => p.length > 0);
+        const firstName = nameParts.pop() || '';
+        const lastName = nameParts.join(' ') || '';
+
+        // Parse date of birth (index 3 - format: DD/MM/YYYY)
+        let dob = parts[3].trim().replace(/\//g, '');
         if (dob.length === 8) {
-            // Convert DDMMYYYY to YYYY-MM-DD
+            // Convert DDMMYYYY to YYYY-MM-DD for HTML date input
             const day = dob.substring(0, 2);
             const month = dob.substring(2, 4);
             const year = dob.substring(4, 8);
             dob = `${year}-${month}-${day}`;
         }
 
-        // Parse gender
+        // Parse gender (index 4)
         let gender = 'other';
-        const genderText = parts[3].toLowerCase();
-        if (genderText.includes('nam') || genderText === 'male') {
+        const genderText = parts[4].toLowerCase().trim();
+        if (genderText === 'nam' || genderText === 'male') {
             gender = 'male';
-        } else if (genderText.includes('nữ') || genderText === 'female' || genderText.includes('nu')) {
+        } else if (genderText === 'nữ' || genderText === 'nu' || genderText === 'female') {
             gender = 'female';
         }
 
-        // Split full name into first and last name
-        const fullName = parts[1].trim();
-        const nameParts = fullName.split(' ');
-        const firstName = nameParts.pop() || '';
-        const lastName = nameParts.join(' ') || '';
+        // Get address (index 5)
+        const address = parts[5] ? parts[5].trim() : '';
+        
+        // Parse address to extract city and province if possible
+        // Format: "40 Bùi Thị Xuân, Phường 2, Đà Lạt, Lâm Đồng"
+        const addressParts = address.split(',').map(p => p.trim());
+        let city = '';
+        let province = '';
+        
+        if (addressParts.length >= 2) {
+            province = addressParts[addressParts.length - 1]; // Last part is province
+            if (addressParts.length >= 3) {
+                city = addressParts[addressParts.length - 2]; // Second to last is city
+            }
+        }
 
         return {
-            id_number: parts[0].trim(),
+            id_number: cccdNumber,
             full_name: fullName,
             last_name: lastName,
             first_name: firstName,
             date_of_birth: dob,
             gender: gender,
-            address: parts[4] ? parts[4].trim() : '',
+            address: address,
+            city: city,
+            province: province,
         };
     } catch (error) {
         console.error('Error parsing CCCD data:', error);
