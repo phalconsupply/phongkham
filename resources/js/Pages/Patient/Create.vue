@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onErrorCaptured } from 'vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
@@ -9,6 +9,14 @@ import TextInput from '@/Components/TextInput.vue';
 
 // Temporarily disable QRScanner for debugging
 // const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
+
+// Error tracking for mobile debugging
+const renderError = ref(null);
+onErrorCaptured((err, instance, info) => {
+    console.error('Error captured:', err, info);
+    renderError.value = err.toString();
+    return false;
+});
 
 const showQRScanner = ref(false);
 const scanSuccess = ref(false);
@@ -77,6 +85,16 @@ const submit = () => {
                 Thêm Bệnh Nhân Mới
             </h2>
         </template>
+
+        <!-- Error Display for Mobile Debugging -->
+        <div v-if="renderError" class="py-12">
+            <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <strong class="font-bold">Error on Mobile: </strong>
+                    <span class="block sm:inline">{{ renderError }}</span>
+                </div>
+            </div>
+        </div>
 
         <div class="py-12">
             <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
