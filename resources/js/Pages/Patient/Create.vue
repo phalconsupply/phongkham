@@ -79,7 +79,34 @@ const submit = () => {
 <template>
     <Head title="Thêm Bệnh Nhân Mới" />
 
-    <AuthenticatedLayout>
+    <div style="background: red; color: white; padding: 20px; min-height: 100vh;">
+        <h1 style="font-size: 24px; margin-bottom: 20px;">MOBILE DEBUG TEST</h1>
+        <p>If you see this, Vue is working!</p>
+        <p>Error: {{ renderError || 'No error' }}</p>
+        <button @click="testClick" style="padding: 10px; background: blue; color: white; border: none; margin-top: 20px;">
+            Click Test
+        </button>
+        <p>Clicked: {{ clickCount }}</p>
+    </div>
+</template>
+
+<script setup>
+import { Head } from '@inertiajs/vue3';
+import { ref, onErrorCaptured } from 'vue';
+
+const renderError = ref(null);
+const clickCount = ref(0);
+
+const testClick = () => {
+    clickCount.value++;
+    alert('Button clicked!');
+};
+
+onErrorCaptured((err) => {
+    renderError.value = err.toString();
+    return false;
+});
+</script>
         <template #header>
             <h2 class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200">
                 Thêm Bệnh Nhân Mới
