@@ -21,29 +21,33 @@
                         <div class="flex justify-end mb-4">
                             <button
                                 type="button"
-                                @click="showQRScanner = !showQRScanner"
+                                @click="openScanner"
                                 class="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                             >
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
                                 </svg>
-                                <span>{{ showQRScanner ? 'Đóng Scanner' : 'Quét CCCD' }}</span>
+                                <span>Quét CCCD</span>
                             </button>
                         </div>
 
                         <!-- QR Scanner Modal -->
-                        <div v-if="showQRScanner" class="mb-6">
+                        <div v-if="showQRScanner">
                             <Suspense>
                                 <template #default>
                                     <QRScanner
+                                        :key="scannerKey"
                                         @scan-success="handleQRScan"
                                         @scan-error="handleQRError"
-                                        @close="showQRScanner = false"
+                                        @close="closeScanner"
                                     />
                                 </template>
                                 <template #fallback>
-                                    <div class="p-4 bg-gray-100 rounded-lg text-center">
-                                        <p>Đang tải camera...</p>
+                                    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
+                                        <div class="bg-white rounded-lg p-8 text-center">
+                                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                                            <p class="text-gray-700">Đang tải camera...</p>
+                                        </div>
                                     </div>
                                 </template>
                             </Suspense>
@@ -202,12 +206,13 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref, defineAsyncComponent } from 'vue';
+import { ref, defineAsyncComponent, nextTick } from 'vue';
 
 // Lazy load QRScanner
 const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
 
 const showQRScanner = ref(false);
+const scannerKey = ref(0); // Force re-render
 const scanSuccess = ref(false);
 const scanMessage = ref('');
 
@@ -257,6 +262,16 @@ const handleQRScan = (cccdData) => {
 
 const handleQRError = (error) => {
     console.error('QR Scan Error:', error);
+};
+
+const openScanner = async () => {
+    scannerKey.value++; // Force component re-mount
+    showQRScanner.value = true;
+    await nextTick(); // Wait for DOM update
+};
+
+const closeScanner = () => {
+    showQRScanner.value = false;
 };
 
 const submit = () => {
