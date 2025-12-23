@@ -119,10 +119,23 @@ const startScanning = async () => {
             html5QrCode.value = new Html5Qrcode('qr-reader');
         }
 
+        // Detect iOS
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        // Config optimized for different platforms
         const config = {
-            fps: 10,
-            qrbox: { width: 250, height: 250 },
+            fps: isIOS ? 5 : 10, // Lower FPS for iOS
+            qrbox: isIOS 
+                ? { width: 300, height: 300 }  // Larger box for iOS
+                : { width: 250, height: 250 },
             aspectRatio: 1.0,
+            disableFlip: false,
+            videoConstraints: {
+                facingMode: { ideal: 'environment' },
+                width: { ideal: 1280 },
+                height: { ideal: 720 }
+            }
         };
 
         await html5QrCode.value.start(
