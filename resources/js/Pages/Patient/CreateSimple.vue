@@ -32,26 +32,13 @@
                         </div>
 
                         <!-- QR Scanner Modal -->
-                        <div v-if="showQRScanner">
-                            <Suspense>
-                                <template #default>
-                                    <QRScanner
-                                        :key="scannerKey"
-                                        @scan-success="handleQRScan"
-                                        @scan-error="handleQRError"
-                                        @close="closeScanner"
-                                    />
-                                </template>
-                                <template #fallback>
-                                    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75">
-                                        <div class="bg-white rounded-lg p-8 text-center">
-                                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                                            <p class="text-gray-700">Đang tải camera...</p>
-                                        </div>
-                                    </div>
-                                </template>
-                            </Suspense>
-                        </div>
+                        <QRScanner
+                            v-if="showQRScanner"
+                            :key="scannerKey"
+                            @scan-success="handleQRScan"
+                            @scan-error="handleQRError"
+                            @close="closeScanner"
+                        />
 
                         <!-- Thông Tin Cá Nhân -->
                         <div class="space-y-4">
@@ -206,10 +193,8 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref, defineAsyncComponent, nextTick } from 'vue';
-
-// Lazy load QRScanner
-const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
+import { ref, nextTick } from 'vue';
+import QRScanner from '@/Components/QRScanner.vue'; // Direct import instead of lazy load
 
 const showQRScanner = ref(false);
 const scannerKey = ref(0); // Force re-render
