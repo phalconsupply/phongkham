@@ -10,8 +10,37 @@
 
         <div class="py-6">
             <div class="mx-auto max-w-4xl px-4">
+                <!-- Success Message -->
+                <div v-if="scanSuccess" class="mb-4 rounded-lg bg-green-100 p-4 text-green-800">
+                    {{ scanMessage }}
+                </div>
+
                 <div class="bg-white shadow rounded-lg p-6">
                     <form @submit.prevent="submit" class="space-y-6">
+                        <!-- QR Scanner Button -->
+                        <div class="flex justify-end mb-4">
+                            <button
+                                type="button"
+                                @click="showQRScanner = true"
+                                class="flex items-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                            >
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                </svg>
+                                <span>Quét CCCD</span>
+                            </button>
+                        </div>
+
+                        <!-- QR Scanner Modal -->
+                        <Suspense>
+                            <QRScanner
+                                v-if="showQRScanner"
+                                @scan-success="handleQRScan"
+                                @scan-error="handleQRError"
+                                @close="showQRScanner = false"
+                            />
+                        </Suspense>
+
                         <!-- Thông Tin Cá Nhân -->
                         <div class="space-y-4">
                             <h3 class="text-lg font-semibold border-b pb-2">Thông Tin Cá Nhân</h3>
@@ -165,6 +194,14 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { ref, defineAsyncComponent } from 'vue';
+
+// Lazy load QRScanner
+const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
+
+const showQRScanner = ref(false);
+const scanSuccess = ref(false);
+const scanMessage = ref('');
 
 const form = useForm({
     first_name: '',
@@ -186,6 +223,29 @@ const form = useForm({
     allergies: '',
     blood_type: '',
 });
+
+// Handle QR scan success
+const handleQRScan = (cccdData) => {
+    form.id_number = cccdData.id_number || form.id_number;
+    form.first_name = cccdData.first_name || form.first_name;
+    form.last_name = cccdData.last_name || form.last_name;
+    form.date_of_birth = cccdData.date_of_birth || form.date_of_birth;
+    form.gender = cccdData.gender || form.gender;
+    form.address = cccdData.address || form.address;
+    
+    scanSuccess.value = true;
+    scanMessage.value = `✅ Đã quét thành công: ${cccdData.full_name}`;
+    showQRScanner.value = false;
+    
+    setTimeout(() => {
+        scanSuccess.value = false;
+        scanMessage.value = '';
+    }, 5000);
+};
+
+const handleQRError = (error) => {
+    console.error('QR Scan Error:', error);
+};
 
 const submit = () => {
     form.post(route('patients.store'));
