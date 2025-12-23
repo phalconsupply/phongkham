@@ -1,14 +1,14 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref, defineAsyncComponent } from 'vue';
+import { ref } from 'vue';
 import InputError from '@/Components/InputError.vue';
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import TextInput from '@/Components/TextInput.vue';
 
-// Lazy load QRScanner to prevent mobile errors
-const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
+// Temporarily disable QRScanner for debugging
+// const QRScanner = defineAsyncComponent(() => import('@/Components/QRScanner.vue'));
 
 const showQRScanner = ref(false);
 const scanSuccess = ref(false);
@@ -90,7 +90,8 @@ const submit = () => {
 
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
-                        <!-- QR Scanner Button -->
+                        <!-- QR Scanner Button (Temporarily disabled) -->
+                        <!--
                         <div class="flex justify-end">
                             <button
                                 type="button"
@@ -103,6 +104,7 @@ const submit = () => {
                                 <span>Quét CCCD</span>
                             </button>
                         </div>
+                        -->
 
                         <!-- Thông Tin Cá Nhân -->
                         <div class="space-y-6">
@@ -348,7 +350,8 @@ const submit = () => {
                                     id="notes"
                                     v-model="form.notes"
 
-        <!-- QR Scanner Modal (only load when needed) -->
+        <!-- QR Scanner Modal (Temporarily disabled for debugging) -->
+        <!--
         <Suspense v-if="showQRScanner">
             <QRScanner
                 :show="showQRScanner"
@@ -362,6 +365,7 @@ const submit = () => {
                 </div>
             </template>
         </Suspense>
+        -->
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300"
                                     rows="3"
                                 ></textarea>
